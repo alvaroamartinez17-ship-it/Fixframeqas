@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "Fixframe – repair guides from video",
+  "short_name": "Fixframe",
+  "description": "Cut a repair video into steps, mark up pictures and export MP4, GIF, PDF, Word or HTML. Videos are processed locally in the browser.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#100E0D",
+  "theme_color": "#100E0D",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
