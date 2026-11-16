@@ -5,8 +5,8 @@ Fixframe turns repair videos into a step-by-step guide, right on your phone:
 1. **Cut** one or more videos into steps (Split here / Set start / Set end, or drag the handles on the timeline)
    and speed up slow parts (½× to 16×).
 2. **Capture** frames and mark them up with arrows, info boxes with a pointer, circles, frames and numbers.
-3. **Export** an MP4 video, a GIF, a PDF, a Word file (.docx) or a single-file HTML guide with a clip per step.
-4. **Hand over**: create an edit file and send it with the video so someone else can continue editing.
+3. **Export** an MP4 video, a PDF or a Word file (.docx). (GIF and HTML exports were removed in 1.5.7.)
+4. **Hand over**: create an edit file (or show it as QR codes) and send it with the video so someone else can continue editing.
 
 **Privacy:** Your videos and project data are processed locally in this browser. Fixframe does not upload them to
 its server. Files leave the app only when you choose to save, download, export or share them.
@@ -19,17 +19,23 @@ The app contacts only the website that hosts it (your GitHub Pages site), and as
 It sends nothing: invitation codes and unlock codes are checked on the device. The browser itself may still look at
 the small file `sw.js` now and then when the app is opened online (web apps cannot switch this off); Fixframe makes
 sure such a look downloads and installs nothing.
-The same statement is shown on the start screen and under Settings → Privacy; its single source is `src/privacy.txt`
-in the build, or the `PRIVACY_TEXT` line plus the start-screen paragraph in `index.html`.
+The same statement is shown on the start screen and under Settings → Privacy; it is written once, in
+`settings.js` (`TEXTS.privacy`).
+
+**Reading and changing the app yourself:** see **`CODE-GUIDE.md`**. Since 1.7.0 the files on GitHub are the app
+itself, in readable form: the screens in `index.html`, the look in `style.css`, the behaviour in the `.js` files next to it
+(one file per job, each starting with a plain-language explanation), and everything you are likely to change in
+`settings.js`.
 
 ## Put it on GitHub Pages
 
 1. Create a new repository on GitHub, for example `fixframe` (public, or private with Pages enabled on your plan).
-2. Upload **all files of this folder** to the repository root. There are no sub-folders: `index.html`, `sw.js`,
-   `manifest.webmanifest`, `sample.mp4`, `step-bg.jpg`, the five icon `.png` files, the export font
-   (`fx-font-regular.ttf`, `fx-font-bold.ttf`, `Inter-OFL.txt`), `.nojekyll` and `README.md`.
-   Leave an existing `access.json` in the repository as it is.
-   (If you used version 1.0, you can delete the old `icons` folder from the repository.)
+2. Upload **all files of this folder** to the repository root. Since 1.8.1 there are no sub-folders: every file sits next
+   to `index.html` (the screens), `style.css` (the look), the code files (`settings.js`, `editor.js` …), the music files
+   (`snd-*.m4a`), icons, fonts, `sample.mp4`, `step-bg.jpg`, `README.md` and `CODE-GUIDE.md`. On github.com:
+   *Add file → Upload files*, then choose all files at once (Ctrl+A / Cmd+A in the file window). Leave an existing
+   `access.json` in the repository as it is.
+   If you keep the owner tool on the website for your iPhone, leave the folder `owner` as it is too.
 3. In the repository: **Settings → Pages → Build and deployment → Deploy from a branch**, branch `main`, folder `/ (root)`, Save.
 4. After a minute the app is live at `https://<your-user>.github.io/fixframe/`.
 
@@ -50,9 +56,11 @@ After the first start the app also works offline.
 ## Releasing an update
 
 1. Change the version in **two places** and keep them identical:
-   - `index.html`: `const APP_VERSION = '1.5.6';`
-   - `sw.js`: `const VERSION = '1.5.6';`
-2. Upload the changed files to the repository.
+   - `settings.js`: `const APP_VERSION = '1.8.2';`
+   - `sw.js`: `const VERSION = '1.8.2';`
+2. Upload the changed files to the repository (or edit them directly on github.com, see `CODE-GUIDE.md`).
+   A new code file must also be added to the list of scripts at the end of `index.html` and to the file list in
+   `sw.js`.
 3. In the app: **Settings (sliders icon) → Check for updates → Install update**. Nothing happens automatically:
    each phone or laptop gets the new version only when someone taps *Check for updates* there. Guides are kept during
    updates. (Phones still on 1.5.1 or older check by themselves one last time and show the *Update ready* banner.)
@@ -64,8 +72,8 @@ of the app download: it comes from the private owner kit (`fixframe-owner.html`)
 
 - **No `access.json`:** the app is open to everyone, with no export limit.
 - **With `access.json`:** the app asks for a personal invitation code (`FX-XXXX-XXXX`) once per device. The file holds
-  only a fingerprint of each code; the place in the list is the invitation number. After 10 video exports (MP4 or GIF)
-  the app shows a request number and asks for an 8-digit unlock code. Editing and PDF, Word and HTML guides are not
+  only a fingerprint of each code; the place in the list is the invitation number. After 10 video exports
+  the app shows a request number and asks for an 8-digit unlock code. Editing, PDF and Word guides are not
   counted.
 - **Block a code / new codes / other limit:** change it in the owner tool, download the new `access.json`, upload it here
   (Add file → Upload files). Activated phones read the list again only every few days (owner tool → Settings →
@@ -115,13 +123,20 @@ guide info, export settings, the name of who made it and the hand-over history.
   The guide is rebuilt with all cuts, texts and markup; the pictures are captured again from the video.
 - **Send back:** when an edit file belongs to a guide that is already on the phone, the videos are not needed again.
   Choose **Update the guide on this phone** (replaces its steps, texts and pictures) or **Keep both**.
+- **By QR code (since 1.6.0):** instead of sending the edit file, show it as QR codes. After **Export → Edit file**, tap
+  **Show as QR code**. On the other phone or laptop, tap **Scan QR code** on the start screen and hold its camera
+  20–40 cm in front of the codes (a longer guide shows several codes one after another; they are read in any order).
+  Works between any phones and laptops with a camera, in both directions, also offline. The codes hold the edit data
+  without the preview pictures, compressed; the videos still have to be sent separately and are chosen on the other
+  device as with an edit file. The camera picture is read in the browser to find the code. Fixframe reads the codes
+  itself (no extra library); where the browser has its own QR reader (Chrome on Android and Mac), that is used first.
 - **Guide info → History** shows who started the guide and who made or opened edit files.
 - The brand kit (logo, card background, intro, safety and closing videos) is a setting of each phone and is not part of
   the edit file.
 
 ## Export design (Settings → Open brand settings → Export design)
 
-Videos, GIFs, PDF, Word and HTML guides share one product-page look: near-black stage (#0D0D0D), white type,
+Videos, PDF and Word guides share one product-page look: near-black stage (#0D0D0D), white type,
 the repair shown on a grey stage, small upper-case
 labels above large headlines, picture cards for all steps, a contact block and a footer with company and copyright.
 The app's own screens keep their orange look.
@@ -133,7 +148,7 @@ The app's own screens keep their orange look.
 - **Company name, claim, contact and address:** used on the covers, in the contact block and the footers
   ("© 2026 Company - Alle Rechte vorbehalten.").
 - **Font for exports:** Inter (included, SIL Open Font License, see `Inter-OFL.txt`) or your brand font: load its
-  .ttf or .otf files (regular and bold). It is drawn on video cards and embedded in PDF, Word (.ttf only) and HTML
+  .ttf or .otf files (regular and bold). It is drawn on video cards and embedded in PDF and Word (.ttf only)
   files. Fonts whose licence forbids embedding are used for videos only. Check your font licence before loading it.
 
 ## Brand & safety (Settings → Open brand settings)
@@ -146,6 +161,15 @@ The app's own screens keep their orange look.
   GIF, BMP, SVG, TIFF, and HEIC where the browser can read it (Safari; on iPhone, pictures from Photos are converted
   automatically). Each part can be switched on or off on the export screen.
 
+## Add sound (music under the video)
+On the export screen, video format: switch on **Add sound (music)**, choose a **Sound style** (Standard, Jazz, Lo-fi, and any sound
+packs made in the Fixsound app on the same web address) and, if wanted, **Short tone at each step**. After the video is made,
+the music is laid under it, following the parts of the guide: presentation (brand intro + title card), safety (with an attention
+tone at its start), steps, closing; it fades out at the end. The picture is not changed. The sound is mixed on the device; the
+music files (`snd-*.m4a`, about 3 MB) are kept offline with the app. Spoken text is not part of it yet.
+Sound needs a browser that can write sound (WebCodecs AudioEncoder: current Chrome/Edge, recent Safari). Where it cannot, the
+video is made without sound and a message says so. Chrome without an AAC encoder writes the sound as Opus.
+
 ## Reset
 
 **Settings → Delete all guides and reset** removes every guide, video and picture, your name and brand settings,
@@ -154,7 +178,7 @@ or *Uninstall* (Android).
 
 ## Good to know
 
-- Exported videos and GIFs are silent.
+- Exported videos are silent.
 - MP4 export uses the device's video encoder (iOS 16.4+ / current Chrome on Android, Chrome or Edge on a computer).
   Since 1.5.1 the frames of MP4, MOV and WebM-in-MP4 files are decoded in order (WebCodecs) instead of seeking the
   video for every frame, so rendering takes roughly as long as the finished video. Fragmented MP4s and formats the
@@ -167,7 +191,7 @@ or *Uninstall* (Android).
   (seeking, slower) and a short message says so. The export option **Fast rendering** switches the fast way off
   completely.
 - While a video renders, the export screen shows a looping animation (chainsaw, car, downhill bike, coffee machine).
-  It is drawn inside `index.html`, so nothing is loaded for it.
+  It is drawn inside `index.html` (look for "waiting animation"), so nothing extra is loaded for it.
 - Keep Fixframe open and in front until an export finishes. Browsers slow down pages in background tabs and
   minimised windows, and the screen should stay on.
 - Fixframe keeps its own copy of each video in the browser's storage. Delete guides you no longer need to free space;
