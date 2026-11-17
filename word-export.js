@@ -92,28 +92,31 @@ function wParas(text, p = {}, r = {}) {
 }
 
 
+/* Brand colours for Word: XT in settings.js without the '#'. */
+const wx = (hex) => String(hex).replace('#', '').toUpperCase();
+
 function docxStyles(font, lang, tabPos) {
   const f = xmlEsc(font);
   const st = (type, id, name, extra) => `<w:style w:type="${type}"${id === 'Normal' ? ' w:default="1"' : ''}${/^(Kicker|StepKicker|Subtitle2|Meta|ListItem|Caution|Picture|CellText|Banner)$/.test(id) ? ' w:customStyle="1"' : ''} w:styleId="${id}"><w:name w:val="${name}"/>${extra}</w:style>`;
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="${f}" w:hAnsi="${f}" w:eastAsia="${f}" w:cs="${f}"/><w:color w:val="0D0D0D"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="${lang}"/></w:rPr></w:rPrDefault>
+<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="${f}" w:hAnsi="${f}" w:eastAsia="${f}" w:cs="${f}"/><w:color w:val="${wx(XT.ink)}"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="${lang}"/></w:rPr></w:rPrDefault>
 <w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="288" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>
 ${st('paragraph', 'Normal', 'Normal', '<w:qFormat/>')}
-${st('paragraph', 'Title', 'Title', '<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="60" w:after="200" w:line="240" w:lineRule="auto"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="FFFFFF"/><w:spacing w:val="-10"/><w:sz w:val="60"/><w:szCs w:val="60"/></w:rPr>')}
-${st('paragraph', 'Subtitle', 'Subtitle', '<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="200" w:line="300" w:lineRule="auto"/></w:pPr><w:rPr><w:color w:val="C2C2C2"/><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr>')}
-${st('paragraph', 'Meta', 'Meta', '<w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="0"/></w:pPr><w:rPr><w:color w:val="8F8F8F"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr>')}
-${st('paragraph', 'Kicker', 'Kicker', '<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:keepNext/><w:spacing w:before="0" w:after="100"/></w:pPr><w:rPr><w:b/><w:bCs/><w:caps/><w:color w:val="7A7A7A"/><w:spacing w:val="28"/><w:sz w:val="15"/><w:szCs w:val="15"/></w:rPr>')}
-${st('paragraph', 'StepKicker', 'Step label', '<w:basedOn w:val="Kicker"/><w:next w:val="Heading1"/><w:pPr><w:keepNext/><w:pBdr><w:top w:val="single" w:sz="4" w:space="18" w:color="D9D9D9"/></w:pBdr><w:spacing w:before="480" w:after="100"/></w:pPr>')}
+${st('paragraph', 'Title', 'Title', `<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="60" w:after="200" w:line="240" w:lineRule="auto"/></w:pPr><w:rPr><w:b/><w:bCs/><w:color w:val="${wx(XT.white)}"/><w:spacing w:val="-10"/><w:sz w:val="60"/><w:szCs w:val="60"/></w:rPr>`)}
+${st('paragraph', 'Subtitle', 'Subtitle', `<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="200" w:line="300" w:lineRule="auto"/></w:pPr><w:rPr><w:color w:val="${wx(XT.grey1)}"/><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr>`)}
+${st('paragraph', 'Meta', 'Meta', `<w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="0"/></w:pPr><w:rPr><w:color w:val="${wx(XT.grey2)}"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr>`)}
+${st('paragraph', 'Kicker', 'Kicker', `<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:keepNext/><w:spacing w:before="0" w:after="100"/></w:pPr><w:rPr><w:b/><w:bCs/><w:caps/><w:color w:val="${wx(XT.brown)}"/><w:spacing w:val="28"/><w:sz w:val="15"/><w:szCs w:val="15"/></w:rPr>`)}
+${st('paragraph', 'StepKicker', 'Step label', `<w:basedOn w:val="Kicker"/><w:next w:val="Heading1"/><w:pPr><w:keepNext/><w:pBdr><w:top w:val="single" w:sz="4" w:space="18" w:color="${wx(XT.rule)}"/></w:pBdr><w:spacing w:before="480" w:after="100"/></w:pPr>`)}
 ${st('paragraph', 'Heading1', 'heading 1', '<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/><w:spacing w:before="0" w:after="160" w:line="252" w:lineRule="auto"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:bCs/><w:spacing w:val="-6"/><w:sz w:val="36"/><w:szCs w:val="36"/></w:rPr>')}
 ${st('paragraph', 'Heading2', 'heading 2', '<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/><w:spacing w:before="0" w:after="240" w:line="252" w:lineRule="auto"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:bCs/><w:spacing w:val="-6"/><w:sz w:val="32"/><w:szCs w:val="32"/></w:rPr>')}
 ${st('paragraph', 'ListItem', 'List Item', '<w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="80"/><w:ind w:left="300" w:hanging="300"/></w:pPr>')}
-${st('paragraph', 'Caution', 'Caution', '<w:basedOn w:val="Normal"/><w:pPr><w:keepNext/><w:pBdr><w:left w:val="single" w:sz="24" w:space="10" w:color="C79100"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="FFF6D9"/><w:spacing w:before="160" w:after="240"/><w:ind w:left="240" w:right="120"/></w:pPr><w:rPr><w:color w:val="4A3700"/></w:rPr>')}
-${st('paragraph', 'Caption', 'caption', '<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="80" w:after="200"/></w:pPr><w:rPr><w:color w:val="7A7A7A"/><w:sz w:val="17"/><w:szCs w:val="17"/></w:rPr>')}
+${st('paragraph', 'Caution', 'Caution', `<w:basedOn w:val="Normal"/><w:pPr><w:keepNext/><w:pBdr><w:left w:val="single" w:sz="24" w:space="10" w:color="${wx(XT.caution)}"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="${wx(XT.cautionBg)}"/><w:spacing w:before="160" w:after="240"/><w:ind w:left="240" w:right="120"/></w:pPr><w:rPr><w:color w:val="${wx(XT.cautionInk)}"/></w:rPr>`)}
+${st('paragraph', 'Caption', 'caption', `<w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="80" w:after="200"/></w:pPr><w:rPr><w:color w:val="${wx(XT.ink3)}"/><w:sz w:val="17"/><w:szCs w:val="17"/></w:rPr>`)}
 ${st('paragraph', 'Picture', 'Picture', '<w:basedOn w:val="Normal"/><w:pPr><w:keepNext/><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr>')}
 ${st('paragraph', 'CellText', 'Cell Text', '<w:basedOn w:val="Normal"/><w:pPr><w:spacing w:after="60"/></w:pPr>')}
-${st('paragraph', 'Header', 'header', `<w:basedOn w:val="Normal"/><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="6" w:color="D9D9D9"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="${tabPos}"/></w:tabs><w:spacing w:after="0"/></w:pPr><w:rPr><w:color w:val="7A7A7A"/><w:sz w:val="15"/><w:szCs w:val="15"/></w:rPr>`)}
-${st('paragraph', 'Footer', 'footer', `<w:basedOn w:val="Normal"/><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="6" w:color="D9D9D9"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="${tabPos}"/></w:tabs><w:spacing w:after="0"/></w:pPr><w:rPr><w:color w:val="7A7A7A"/><w:sz w:val="15"/><w:szCs w:val="15"/></w:rPr>`)}
+${st('paragraph', 'Header', 'header', `<w:basedOn w:val="Normal"/><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="6" w:color="${wx(XT.rule)}"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="${tabPos}"/></w:tabs><w:spacing w:after="0"/></w:pPr><w:rPr><w:color w:val="${wx(XT.ink3)}"/><w:sz w:val="15"/><w:szCs w:val="15"/></w:rPr>`)}
+${st('paragraph', 'Footer', 'footer', `<w:basedOn w:val="Normal"/><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="6" w:color="${wx(XT.rule)}"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="${tabPos}"/></w:tabs><w:spacing w:after="0"/></w:pPr><w:rPr><w:color w:val="${wx(XT.ink3)}"/><w:sz w:val="15"/><w:szCs w:val="15"/></w:rPr>`)}
 </w:styles>`;
 }
 function newGuid() {
@@ -138,7 +141,7 @@ async function buildDocx(data, opts) {
   const CW = pg.w - pg.m * 2; // content width in twips
   const T2E = 635;
   const ff = XFont.fileFaces();
-  const fontName = ff.name || 'Inter';
+  const fontName = ff.name || 'Noto Sans SemiCondensed';
   const n = data.steps.length;
   const media = [];
   const rels = [];
@@ -193,28 +196,28 @@ async function buildDocx(data, opts) {
   /* ---------- title banner: black, like the stage of the product pages ---------- */
   const inner = CW - 960;
   let bx = '';
-  if (logo) bx += wPara(logoRun(320040, 1645920), { spacing: 'w:before="0" w:after="480"' });
-  else if (data.company) bx += wPara(wRun(data.company, { b: true, caps: true, color: 'FFFFFF', spacing: 28, sz: 18 }), { spacing: 'w:before="0" w:after="480"' });
-  bx += kicker(L.guide, '8F8F8F');
-  bx += wPara(wRun(data.title), { style: 'Title' });
+  if (logo) bx += wPara(logoRun(320040, 1645920), { spacing: 'w:before="0" w:after="480"', jc: 'center' });
+  else if (data.company) bx += wPara(wRun(data.company, { b: true, caps: true, color: wx(XT.white), spacing: 28, sz: 18 }), { spacing: 'w:before="0" w:after="480"', jc: 'center' });
+  bx += wPara(wRun(L.guide, { color: wx(XT.brown) }), { style: 'Kicker', jc: 'center' });
+  bx += wPara(wRun(data.title), { style: 'Title', jc: 'center' });
   const sub = data.claim || xFirstSentence(data.intro, 160);
-  if (sub) bx += wPara(wRun(sub), { style: 'Subtitle' });
-  bx += wPara(wRun([L.steps(n), longDate(data.date)].concat(data.author ? [`${L.madeBy} ${data.author}`] : []).join('   ·   ')), { style: 'Meta' });
+  if (sub) bx += wPara(wRun(sub), { style: 'Subtitle', jc: 'center' });
+  bx += wPara(wRun([L.steps(n), longDate(data.date)].concat(data.author ? [`${L.madeBy} ${data.author}`] : []).join('   ·   ')), { style: 'Meta', jc: 'center' });
   if (data.hero) {
     const cx = inner * T2E;
     bx += wPara(drawing(await ridOf(data.hero), cx, (cx * 2) / 3, coverCrop(data.hero.w, data.hero.h, 1.5)), { style: 'Picture', spacing: 'w:before="360" w:after="0"' });
   }
-  body += table([CW], [row(cell(CW, bx, { fill: '0D0D0D', m: 480 }))]);
+  body += table([CW], [row(cell(CW, bx, { fill: wx(XT.black), m: 480 }))]);
   body += gapPara(360);
 
   if (data.intro) { body += kicker(L.intro); body += wParas(data.intro, { spacing: 'w:after="160"' }); body += gapPara(240); }
 
   /* ---------- tools and safety side by side ---------- */
-  const listBlock = (title, items, safety) => kicker(title, safety ? 'C79100' : null)
-    + items.map((t) => wPara(wRun('■', { color: safety ? 'C79100' : '0D0D0D', sz: 14 }) + W_TAB + wRun(t, safety ? { color: '4A3700' } : {}), { style: 'ListItem' })).join('');
+  const listBlock = (title, items, safety) => kicker(title, safety ? wx(XT.caution) : null)
+    + items.map((t) => wPara(wRun('■', { color: safety ? wx(XT.caution) : wx(XT.ink), sz: 14 }) + W_TAB + wRun(t, safety ? { color: wx(XT.cautionInk) } : {}), { style: 'ListItem' })).join('');
   const blocks = [];
-  if (data.tools.length) blocks.push({ xml: listBlock(L.tools, data.tools, false), fill: 'F2F2F2' });
-  if (data.safety.length) blocks.push({ xml: listBlock(L.safety, data.safety, true), fill: 'FFF6D9', left: { sz: 24, color: 'C79100' } });
+  if (data.tools.length) blocks.push({ xml: listBlock(L.tools, data.tools, false), fill: wx(XT.wash) });
+  if (data.safety.length) blocks.push({ xml: listBlock(L.safety, data.safety, true), fill: wx(XT.cautionBg), left: { sz: 24, color: wx(XT.caution) } });
   if (blocks.length === 2) {
     const w = (CW - 240) / 2;
     body += table([w, 240, w], [row(cell(w, blocks[0].xml, { fill: blocks[0].fill, m: 320 }) + cell(240, '') + cell(w, blocks[1].xml, { fill: blocks[1].fill, m: 320, left: blocks[1].left }))]);
@@ -243,8 +246,8 @@ async function buildDocx(data, opts) {
         const cx = cw * T2E;
         pics += cell(cw, im
           ? wPara(drawing(await ridOf(im), cx, (cx * 2) / 3, coverCrop(im.w, im.h, 1.5)), { style: 'Picture' })
-          : wPara(wRun(String(st.n), { b: true, color: '9A9A9A', sz: 72 }), { style: 'Picture', spacing: 'w:before="480" w:after="480"' }), { fill: 'E6E6E6' });
-        texts += cell(cw, wPara(wRun(xStepLabel(st.n), { b: true, caps: true, color: '7A7A7A', spacing: 28, sz: 14 }), { style: 'CellText', spacing: 'w:before="140" w:after="40"' })
+          : wPara(wRun(String(st.n), { b: true, color: wx(XT.ink3), sz: 72 }), { style: 'Picture', spacing: 'w:before="480" w:after="480"' }), { fill: wx(XT.stageLight) });
+        texts += cell(cw, wPara(wRun(xStepLabel(st.n), { b: true, caps: true, color: wx(XT.brown), spacing: 28, sz: 14 }), { style: 'CellText', spacing: 'w:before="140" w:after="40"' })
           + `<w:p>${wpPr({ style: 'CellText' })}<w:hyperlink w:anchor="step_${st.n}" w:history="1">${wRun(st.title, { b: true, sz: 19 })}</w:hyperlink></w:p>`);
       }
       rows.push(row(pics), row(texts), row(cell(cw, '') + cell(240, '') + cell(cw, '') + cell(240, '') + cell(cw, ''), 360));
@@ -258,12 +261,12 @@ async function buildDocx(data, opts) {
     body += wPara(wRun(xStepLabel(st.n, n)), { style: 'StepKicker' });
     body += `<w:p>${wpPr({ style: 'Heading1' })}<w:bookmarkStart w:id="${st.n}" w:name="step_${st.n}"/>${wRun(st.title)}<w:bookmarkEnd w:id="${st.n}"/></w:p>`;
     if (st.desc) body += wParas(st.desc, { keepNext: true });
-    if (st.caution) body += wPara(wRun(`${L.caution.toUpperCase()}  `, { b: true, color: 'C79100', spacing: 20, sz: 15 }) + wRun(st.caution.replace(/\s*\n\s*/g, ' ')), { style: 'Caution' });
+    if (st.caution) body += wPara(wRun(`${L.caution.toUpperCase()}  `, { b: true, color: wx(XT.caution), spacing: 20, sz: 15 }) + wRun(st.caution.replace(/\s*\n\s*/g, ' ')), { style: 'Caution' });
     if (st.images.length === 1) {
       const im = st.images[0];
       const iw = CW - 480;
       const s = Math.min((iw * T2E) / im.w, 3900000 / im.h);
-      body += table([CW], [row(cell(CW, wPara(drawing(await ridOf(im), im.w * s, im.h * s), { style: 'Picture' }), { fill: 'E6E6E6', m: 240 }))]);
+      body += table([CW], [row(cell(CW, wPara(drawing(await ridOf(im), im.w * s, im.h * s), { style: 'Picture' }), { fill: wx(XT.stageLight), m: 240 }))]);
       body += im.caption ? wPara(wRun(im.caption), { style: 'Caption' }) : gapPara(120);
     } else if (st.images.length > 1) {
       const w = (CW - 240) / 2;
@@ -278,7 +281,7 @@ async function buildDocx(data, opts) {
           if (k) { pics += cell(240, ''); caps += cell(240, ''); }
           if (!im) { pics += cell(w, ''); caps += cell(w, ''); continue; }
           const s = Math.min((iw * T2E) / im.w, 2600000 / im.h);
-          pics += cell(w, wPara(drawing(await ridOf(im), im.w * s, im.h * s), { style: 'Picture' }), { fill: 'E6E6E6', m: 160, valign: 'center' });
+          pics += cell(w, wPara(drawing(await ridOf(im), im.w * s, im.h * s), { style: 'Picture' }), { fill: wx(XT.stageLight), m: 160, valign: 'center' });
           caps += cell(w, im.caption ? wPara(wRun(im.caption), { style: 'Caption', spacing: 'w:before="80" w:after="80"' }) : '');
         }
         rows.push(row(pics), row(caps));
@@ -290,13 +293,13 @@ async function buildDocx(data, opts) {
 
   /* ---------- contact block and copyright ---------- */
   if (data.company || data.contact.length) {
-    let cx = kicker(data.company || L.contact, '8F8F8F');
-    cx += wPara(wRun(L.ask, { b: true, color: 'FFFFFF', sz: 30 }), { spacing: 'w:after="160"' });
-    cx += data.contact.map((t) => wPara(wRun(t, { color: 'C2C2C2' }), { spacing: 'w:after="40"' })).join('');
+    let cx = kicker(data.company || L.contact, wx(XT.brown));
+    cx += wPara(wRun(L.ask, { b: true, color: wx(XT.white), sz: 30 }), { spacing: 'w:after="160"' });
+    cx += data.contact.map((t) => wPara(wRun(t, { color: wx(XT.grey1) }), { spacing: 'w:after="40"' })).join('');
     body += gapPara(360);
-    body += table([CW], [row(cell(CW, cx, { fill: '0D0D0D', m: 480 }))]);
+    body += table([CW], [row(cell(CW, cx, { fill: wx(XT.black), m: 480 }))]);
     const rights = xRights(data.date);
-    body += rights ? wPara(wRun(rights, { color: '7A7A7A', sz: 16 }), { spacing: 'w:before="160"' }) : gapPara(0);
+    body += rights ? wPara(wRun(rights, { color: wx(XT.ink3), sz: 16 }), { spacing: 'w:before="160"' }) : gapPara(0);
   }
 
   /* ---------- header (from page 2), footer with page numbers ---------- */

@@ -24,7 +24,7 @@ Other files in the repository:
 | `manifest.webmanifest` | Name, icon and colours used when the app is installed on a home screen. |
 | `sample.mp4`, `step-bg.jpg` | The demo clip of the Sample guide and the card background picture. |
 | `snd-*.m4a` | The built-in music and the two tones for *Add sound* (from the Fixsound app, about 3 MB). |
-| `fx-font-*.ttf`, `Inter-OFL.txt` | The export font (Inter) and its licence. |
+| `fx-font-*.ttf`, `Noto-OFL.txt`, `Inter-OFL.txt` | The export font (Noto Sans SemiCondensed, a few symbols from Inter) and the licences. |
 | `icon-*.png`, `apple-touch-icon.png`, `favicon-64.png` | App icons. |
 | `access.json` | Only if you use invitation codes; made by your owner tool. Never edit it by hand. |
 | `owner/` | Only if you put the owner tool on the website for your iPhone. Contains no codes. |
@@ -41,7 +41,8 @@ Other files in the repository:
 - QR code size and speed,
 - *Add sound*: the style picked first, the tone at the safety part, how loud the tones are,
 - the export formats, their starting options and the option texts on the export screen,
-- the colours and words (English and German) of the exported videos, PDFs and Word files.
+- the brand look of the exported videos, PDFs and Word files: colours (`XT`), text sizes, margins and the 70/30 split
+  of the video (`XV`), and the words in English and German (`XSTR`).
 
 Everything else, with how safe it is to touch:
 
@@ -125,9 +126,9 @@ same change in the real repository. The test copy has its own guides and no invi
 
 ### Publish the change to the devices
 
-1. Raise the version in **both** places, to the same number, for example from `1.8.1` to `1.8.2`:
-   - `settings.js`: `const APP_VERSION = '1.8.2';`
-   - `sw.js`: `const VERSION = '1.8.2';`
+1. Raise the version in **both** places, to the same number, for example from `1.8.2` to `1.8.3`:
+   - `settings.js`: `const APP_VERSION = '1.8.3';`
+   - `sw.js`: `const VERSION = '1.8.3';`
 2. Wait 1–3 minutes until GitHub Pages has published it.
 3. On each phone or laptop: **Settings → Check for updates → Install update**.
 
@@ -157,12 +158,15 @@ Add it in two places, otherwise it is not loaded or not kept offline:
 | Rename a button on the start screen | `index.html`, search for the button text |
 | Make the app's orange darker | `style.css` → `--marker` (and `--marker-press` for the pressed look) |
 | Change the black of the exported cards | `settings.js` → `XT.black` |
+| Bigger step titles in the video | `settings.js` → `XV.stepTitle: 42` |
+| More room for the step text (35 %) | `settings.js` → `XV.panel: 0.35` |
+| Allow four lines per text block | `settings.js` → `XV.maxLines: 4` |
 | Change "Repair guide" / "Reparaturanleitung" on exports | `settings.js` → `XSTR.en.guide` / `XSTR.de.guide` |
 | Start every video export in 1080p | `settings.js` → `EX_DEFAULTS.mp4.res: '1080'` (new guides; existing guides keep their choice) |
 | Offer 3× speed | `settings.js` → add `3` to `SPEEDS` (a device with an older version reads a 3× step as 1×) |
 | Show brand pictures for 6 seconds as a choice | `settings.js` → add `6` to `PICTURE_SHOW_SECONDS` |
 | Slower QR code changes | `settings.js` → `QR_SETTINGS.secondsPerCode: 1.5` |
-| Other markup colours | `markup-shapes.js` → `ANN_COLORS` |
+| Other markup colours | `markup-shapes.js` → `ANN_COLORS` (now the brand colours) |
 | Different hints in the picture editor | `picture-editor.js` → `PE_HINTS` |
 | Start every video export with sound | `settings.js` → `EX_DEFAULTS.mp4.sound: true` (new guides) |
 | No tone at the start of the safety part | `settings.js` → `SOUND.attentionTone: false` |

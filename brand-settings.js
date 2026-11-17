@@ -188,7 +188,7 @@ function openBrandSettings(onClose) {
   const fontSection = () => {
     const c = Brand.cfg.font;
     return h('div', { class: 'set-section', id: 'brand-font' }, h('h4', null, 'Font for exports'),
-      h('div', { class: 'set-row' }, h('span', null, XFont.custom ? XFont.name : 'Inter'), h('span', { class: 'set-val' }, XFont.custom ? 'your font' : 'standard')),
+      h('div', { class: 'set-row' }, h('span', null, XFont.custom ? XFont.name : 'Noto Sans SemiCondensed'), h('span', { class: 'set-val' }, XFont.custom ? 'your font' : 'standard')),
       XFont.custom && c && c.files ? h('p', null, c.files.join(' · ')) : null,
       XFont.note ? h('p', { class: 'brand-note' }, XFont.note) : null,
       XFont.custom && c && c.cff ? h('p', null, 'Word files name this font but cannot carry it (.otf with PostScript outlines); Word shows it where it is installed.') : null,
@@ -197,7 +197,7 @@ function openBrandSettings(onClose) {
           const files = await pickFiles('.ttf,.otf,.woff,font/ttf,font/otf,font/woff,application/font-sfnt,application/x-font-ttf', true);
           if (files.length) act(() => XFont.choose(files), 'Font saved');
         }),
-        XFont.custom ? btn('Use Inter', () => act(() => XFont.useStandard()), 'danger-ghost') : null),
+        XFont.custom ? btn('Use standard font', () => act(() => XFont.useStandard()), 'danger-ghost') : null),
       h('p', null, 'Load the .ttf or .otf files of your brand font, regular and bold. Only use fonts whose licence allows embedding them in documents.'));
   };
   function draw() {

@@ -56,8 +56,8 @@ After the first start the app also works offline.
 ## Releasing an update
 
 1. Change the version in **two places** and keep them identical:
-   - `settings.js`: `const APP_VERSION = '1.8.2';`
-   - `sw.js`: `const VERSION = '1.8.2';`
+   - `settings.js`: `const APP_VERSION = '1.8.3';`
+   - `sw.js`: `const VERSION = '1.8.3';`
 2. Upload the changed files to the repository (or edit them directly on github.com, see `CODE-GUIDE.md`).
    A new code file must also be added to the list of scripts at the end of `index.html` and to the file list in
    `sw.js`.
@@ -147,7 +147,7 @@ The app's own screens keep their orange look.
 - **PDF pages:** Light (for printing) or Dark. The PDF cover is always black.
 - **Company name, claim, contact and address:** used on the covers, in the contact block and the footers
   ("© 2026 Company - Alle Rechte vorbehalten.").
-- **Font for exports:** Inter (included, SIL Open Font License, see `Inter-OFL.txt`) or your brand font: load its
+- **Font for exports:** Noto Sans SemiCondensed (brand font, included, SIL Open Font License, see `Noto-OFL.txt`; a few symbols from Inter, `Inter-OFL.txt`) or your brand font: load its
   .ttf or .otf files (regular and bold). It is drawn on video cards and embedded in PDF and Word (.ttf only)
   files. Fonts whose licence forbids embedding are used for videos only. Check your font licence before loading it.
 

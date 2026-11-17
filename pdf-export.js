@@ -259,8 +259,8 @@ async function buildPdf(data, opts) {
   const L = xl();
   const dark = Brand.cfg.pdfPages === 'dark';
   const C = dark
-    ? { bg: XT.black, ink: XT.white, ink2: XT.grey1, ink3: XT.grey2, rule: XT.line, stage: XT.stage, panel: XT.panel, cBg: XT.cautionBgDark, cInk: '#FFE9B0', cBar: XT.caution, cLabel: XT.caution }
-    : { bg: XT.paper, ink: XT.ink, ink2: XT.ink2, ink3: XT.ink3, rule: XT.rule, stage: XT.stageLight, panel: XT.wash, cBg: XT.cautionBg, cInk: XT.cautionInk, cBar: XT.cautionDeep, cLabel: XT.cautionDeep };
+    ? { bg: XT.black, ink: XT.white, ink2: XT.grey1, ink3: XT.grey2, rule: XT.line, stage: XT.stage, panel: XT.panel, cBg: XT.cautionBgDark, cInk: XT.white, cBar: XT.caution, cLabel: XT.caution, accent: XT.brown }
+    : { bg: XT.paper, ink: XT.ink, ink2: XT.ink2, ink3: XT.ink3, rule: XT.rule, stage: XT.stageLight, panel: XT.wash, cBg: XT.cautionBg, cInk: XT.cautionInk, cBar: XT.cautionDeep, cLabel: XT.cautionDeep, accent: XT.brown };
   const M = { l: 48, r: 48, t: 74, b: 66 };
   const CW = pdf.W - M.l - M.r;
   const bandH = 34;
@@ -297,20 +297,23 @@ async function buildPdf(data, opts) {
   pdf.page();
   pdf.rect(0, 0, pdf.W, pdf.H, XT.black);
   if (!drawLogo(M.l, 44, 150, 34) && data.company) eyebrow(M.l, 64, data.company, 9, XT.white);
+  // opening title, centred (brand): label in brown, title in white, details in grey
+  const centreAt = (yy, t, font, size, color, track) => pdf.text((pdf.W - pdf.measure(t, font, size, track || 0)) / 2, yy, t, font, size, color, track || 0);
   let y = 196;
-  eyebrow(M.l, y, L.guide, 8.5, XT.grey2);
+  const kick = String(L.guide).toUpperCase();
+  centreAt(y, kick, 'B', 8.5, XT.brown, 8.5 * 0.14);
   y += 20;
-  const tl = pdf.wrap(data.title, 'B', 31, CW).slice(0, 4);
-  tl.forEach((ln, i) => pdf.text(M.l, y + 24 + i * 35, ln, 'B', 31, XT.white, -0.25));
+  const tl = pdf.wrap(data.title, 'B', 31, CW * 0.9).slice(0, 3);
+  tl.forEach((ln, i) => centreAt(y + 24 + i * 35, ln, 'B', 31, XT.white, -0.25));
   y += tl.length * 35 + 14;
   const sub = data.claim || xFirstSentence(data.intro, 140);
   if (sub) {
-    const sl = pdf.wrap(sub, 'R', 13, CW * 0.85).slice(0, 3);
-    sl.forEach((ln, i) => pdf.text(M.l, y + 13 + i * 18.5, ln, 'R', 13, XT.grey1));
+    const sl = pdf.wrap(sub, 'R', 13, CW * 0.8).slice(0, 3);
+    sl.forEach((ln, i) => centreAt(y + 13 + i * 18.5, ln, 'R', 13, XT.grey1));
     y += sl.length * 18.5 + 8;
   }
   const meta = [L.steps(data.steps.length), longDate(data.date)].concat(data.author ? [data.author] : []).join('   ·   ');
-  pdf.text(M.l, y + 16, meta, 'R', 9, XT.grey2);
+  centreAt(y + 16, meta, 'R', 9, XT.grey2);
   y += 40;
   const coverBottom = pdf.H - 84;
   if (data.hero) {
@@ -347,7 +350,7 @@ async function buildPdf(data, opts) {
   };
   const sectionTitle = (kicker, title) => {
     need(64);
-    eyebrow(M.l, y + 8, kicker, 7.5, C.ink3);
+    eyebrow(M.l, y + 8, kicker, 7.5, C.accent);
     y += 16;
     if (title) { pdf.text(M.l, y + 17, title, 'B', 18, C.ink, -0.1); y += 30; }
   };
@@ -374,7 +377,7 @@ async function buildPdf(data, opts) {
         const x = M.l + i * (bw + gap);
         pdf.rect(x, y, bw, bh, b.safety ? C.cBg : C.panel);
         if (b.safety) pdf.rect(x, y, 3, bh, C.cBar);
-        eyebrow(x + 18, y + 26, b.title, 7.5, b.safety ? C.cLabel : C.ink3);
+        eyebrow(x + 18, y + 26, b.title, 7.5, b.safety ? C.cLabel : C.accent);
         let yy = y + 44;
         for (const r of b.rows) {
           pdf.rect(x + 18, yy - 7.2, 4, 4, b.safety ? C.cBar : C.ink);
@@ -405,7 +408,7 @@ async function buildPdf(data, opts) {
         const x = M.l + k * (cw + gap);
         links.push({ page: pdf.pages.length - 1, x, y, w: cw, h: rh, n: st.n });
         st.thumb = { x, y, w: cw, h: ch };
-        eyebrow(x, y + ch + 15, xStepLabel(st.n), 6.5, C.ink3);
+        eyebrow(x, y + ch + 15, xStepLabel(st.n), 6.5, C.accent);
         tls[k].forEach((ln, j) => pdf.text(x, y + ch + 30 + j * 12.5, ln, 'B', 9.5, C.ink));
       });
       for (const st of row) await stage(st.images[0], st.thumb.x, st.thumb.y, st.thumb.w, st.thumb.h, 'contain');
@@ -424,7 +427,7 @@ async function buildPdf(data, opts) {
     need(Math.min(60 + textH + firstH, bottom() - M.t - 10));
     if (y > M.t + 1) { pdf.rect(M.l, y, CW, 0.6, C.rule); y += 22; }
     stepPos[st.n] = { page: pdf.pages.length - 1, y };
-    eyebrow(M.l, y + 8, xStepLabel(st.n, data.steps.length), 7.5, C.ink3);
+    eyebrow(M.l, y + 8, xStepLabel(st.n, data.steps.length), 7.5, C.accent);
     y += 16;
     const tl2 = pdf.wrap(st.title, 'B', 18, CW);
     for (const ln of tl2) { need(23); pdf.text(M.l, y + 17, ln, 'B', 18, C.ink, -0.1); y += 23; }
@@ -478,7 +481,7 @@ async function buildPdf(data, opts) {
     need(boxH + 40);
     y += 8;
     pdf.rect(M.l, y, CW, boxH, dark ? XT.panel : XT.black);
-    eyebrow(M.l + 24, y + 26, data.company || L.contact, 7.5, XT.grey2);
+    eyebrow(M.l + 24, y + 26, data.company || L.contact, 7.5, XT.brown);
     pdf.text(M.l + 24, y + 48, L.ask, 'B', 15, XT.white, -0.1);
     cl.forEach((ln, i) => pdf.text(M.l + 24, y + 70 + i * 15, ln, 'R', 10, XT.grey1));
     y += boxH + 14;

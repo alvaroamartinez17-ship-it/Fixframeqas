@@ -10,7 +10,7 @@
 /* ---- Version ---------------------------------------------------------------------------------------------------
    Shown in Settings. Raise it with every change you publish, AND write the same number in sw.js (line 2),
    otherwise phones and laptops will not see the change when you tap "Check for updates". */
-const APP_VERSION = '1.8.1';
+const APP_VERSION = '1.9.1';
 
 /* ---- Fixed texts -----------------------------------------------------------------------------------------------
    privacy:  shown on the start screen and under Settings → Privacy. Keep it true: it describes what the app does.
@@ -64,7 +64,7 @@ const SOUND = {
    sound: true = "Add sound" is already on; stepTone: true = the short tone at each step is on. */
 const EX_DEFAULTS = {
   fmt: 'mp4',
-  mp4: { res: '720', aspect: 'source', fps: '30', intro: true, stepCards: true, captions: true, pictures: true, picDur: '3', fades: true, brandIntro: true, safety: true, brandOutro: true, watermark: true, fast: true, sound: false, soundStyle: SOUND.startStyle, stepTone: false },
+  mp4: { res: '1080', aspect: '16:9', fps: '30', intro: true, stepCards: true, captions: true, pictures: true, picDur: '3', fades: true, brandIntro: true, safety: true, brandOutro: true, watermark: true, fast: true, sound: false, soundStyle: SOUND.startStyle, stepTone: false },
   pdf: { paper: 'a4', autoPictures: true, safety: true, watermark: true },
   docx: { paper: 'a4', autoPictures: true, safety: true, watermark: true },
 };
@@ -78,8 +78,8 @@ const EX_SCHEMA = {
     { k: 'aspect', label: 'Frame', seg: [['source', 'Original'], ['16:9', '16:9'], ['9:16', '9:16'], ['1:1', '1:1']] },
     { k: 'fps', label: 'Frames per second', seg: [['24', '24'], ['30', '30']] },
     { k: 'intro', label: 'Title card at the start' },
-    { k: 'stepCards', label: 'Card before each step' },
-    { k: 'captions', label: 'Step title and speed on video' },
+    { k: 'stepCards', label: 'Short pause at the start of each step' },
+    { k: 'captions', label: 'Step text beside the video' },
     { k: 'pictures', label: 'Show marked-up pictures' },
     { k: 'picDur', label: 'Seconds per picture', seg: [['2', '2'], ['3', '3'], ['4', '4'], ['5', '5']], dep: 'pictures' },
     { k: 'fades', label: 'Fade between parts' },
@@ -107,15 +107,33 @@ const EX_SCHEMA = {
   edit: [],
 };
 
-/* ---- Look of the exports (video cards, PDF, Word) ----------------------------------------------------------------
-   Colours as #RRGGBB. The app's own colours (orange etc.) are at the top of style.css. */
+/* ---- Look of the exports (video, PDF, Word): the brand identity -----------------------------------------------
+   Colours as #RRGGBB. The app's own colours (orange etc.) are at the top of style.css and are not part of this.
+   Brand rules followed by the exports: white for primary information, brown only to show hierarchy (step labels,
+   section names), red for hot / danger and the safety notes, blue for cold. No other colours. */
 const XT = {
-  black: '#0D0D0D', panel: '#161616', stage: '#262626', line: '#2E2E2E',
-  white: '#FFFFFF', grey1: '#C2C2C2', grey2: '#8F8F8F', grey3: '#5E5E5E',
-  // light pages for printing
-  paper: '#FFFFFF', ink: '#0D0D0D', ink2: '#4D4D4D', ink3: '#7A7A7A', rule: '#D9D9D9', wash: '#F2F2F2', stageLight: '#E6E6E6',
-  // safety notes keep a signal colour
-  caution: '#FFC83D', cautionDeep: '#C79100', cautionBg: '#FFF6D9', cautionInk: '#4A3700', cautionBgDark: '#2A2410',
+  // the brand colours
+  brown: '#996E4E', lightGrey: '#D9D9D6', midGrey: '#75787B', darkGrey: '#53565A', hot: '#DB0812', cold: '#008AC3',
+  // video and the dark PDF/Word cover: background, panel, empty picture area, thin lines
+  black: '#000000', panel: '#141414', stage: '#1C1C1C', line: '#53565A',
+  white: '#FFFFFF', grey1: '#D9D9D6', grey2: '#75787B', grey3: '#53565A',
+  // white pages for printing (PDF, Word)
+  paper: '#FFFFFF', ink: '#111111', ink2: '#53565A', ink3: '#75787B', rule: '#D9D9D6', wash: '#F2F2F1', stageLight: '#E8E8E6',
+  // safety notes: brand red
+  caution: '#DB0812', cautionDeep: '#DB0812', cautionBg: '#FCEBEC', cautionInk: '#111111', cautionBgDark: '#1E0A0B',
+};
+
+/* ---- Sizes and layout of the exported video (brand sheet) ---------------------------------------------------------
+   All sizes in pixels for a 1920 x 1080 video; other sizes are scaled from these. */
+const XV = {
+  title: 68,        // opening title (64-72), centred
+  stepTitle: 40,    // step title (36-42)
+  text: 30,         // instruction text (28-32)
+  caption: 28,      // labels, captions, speed note (at least 28)
+  maxLines: 3,      // at most three lines per text block; longer text ends with …
+  side: 96,         // safe margin left and right
+  bottom: 72,       // important content at least this far from the bottom (also used at the top)
+  panel: 0.30,      // share of the width for the step text; the rest (70 %) shows the machine
 };
 
 /* ---- Words used in the exports, English and German --------------------------------------------------------------

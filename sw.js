@@ -1,11 +1,12 @@
 /* Fixframe service worker: keeps the app available offline and installs updates only when asked. It never contacts other sites.
    VERSION must be the same as APP_VERSION in settings.js. Raise both with every change you publish:
    only a changed sw.js tells phones and laptops that there is something new. */
-const VERSION = '1.8.1';
+const VERSION = '1.9.1';
 const CACHE = `fixframe-${VERSION}`;
 // FILES-START (this list is written by tools/build.py; add new files here by hand if you edit on GitHub)
 const ASSETS = [
   './',
+  './Noto-OFL.txt',
   './apple-touch-icon.png',
   './brand-settings.js',
   './codes.js',

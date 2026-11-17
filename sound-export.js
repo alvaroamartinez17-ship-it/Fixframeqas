@@ -98,6 +98,14 @@ async function addSoundToVideo(blob, plan, onProgress, signal) {
   return MP4.addSound(blob, info, a);
 }
 
+/* The 2-byte AAC setup the MP4 file needs: AAC-LC, 48000 Hz, stereo = 0x11 0x90.
+   Safari on iPhone (WebKit bug 302253, fixed in WebKit in Oct 2026) hands over a wrongly packed setup; written into the
+   file as it is, the sound track is silent. So the browser's setup is used only if it says exactly what was asked for. */
+function aacConfig(desc) {
+  const ok = desc && desc.length === 2 && (desc[0] >> 3) === 2 && (((desc[0] & 7) << 1) | (desc[1] >> 7)) === 3 && ((desc[1] >> 3) & 15) === 2;
+  return ok ? desc : Uint8Array.of(0x11, 0x90);
+}
+
 /* The sound encoder: AAC where the browser has it, else Opus. Fed piece by piece. */
 async function openSoundEncoder() {
   if (!('AudioEncoder' in window)) return null;
@@ -142,7 +150,7 @@ async function openSoundEncoder() {
         if (codec === 'opus') return { codec: 'opus', frameLen: 960, sampleRate: 48000, channels: 2, bitrate: cfg.bitrate, head: desc, frames };
         const adts = (f) => f.length > 7 && f[0] === 0xff && (f[1] & 0xf6) === 0xf0;
         const out = !desc && adts(frames[0]) ? frames.map((f) => f.subarray(f[1] & 1 ? 7 : 9)) : frames;
-        return { codec: 'aac', sampleRate: 48000, channels: 2, bitrate: cfg.bitrate, asc: desc || Uint8Array.of(0x11, 0x90), frames: out };
+        return { codec: 'aac', sampleRate: 48000, channels: 2, bitrate: cfg.bitrate, asc: aacConfig(desc), frames: out };
       },
     };
   }

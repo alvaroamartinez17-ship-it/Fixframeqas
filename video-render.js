@@ -2,8 +2,8 @@
    video-render.js
    What it does:    Paints every frame of the exported video: title card, safety card, step cards, captions, speed
                    badge, pictures, logo.
-   Change here:     Sizes and positions of texts on the cards (look for the card functions: drawIntroCard,
-                   drawStepCard …).
+   Change here:     Sizes, margins and the 70/30 split are in settings.js (XV), colours in XT. The layout of a step
+                   is in stepLayout, stepPanelItems and drawStepFrame, the opening title in drawIntroCard, safety in drawSafetyCard.
    Edit with care: change texts and values, not the structure.
    Technical note:  Video composition in the export look (settings.js and export-look.js): title, safety and step cards,
                    captions, pictures.
@@ -86,58 +86,6 @@ function eyebrowWidth(ctx, text, fs) {
   ctx.restore();
   return w;
 }
-/* Grey stage behind a video frame or picture: the repair is presented like the products on the website. */
-function drawStage(ctx, r, src, fit) {
-  ctx.save();
-  ctx.fillStyle = XT.stage;
-  ctx.fillRect(r.x, r.y, r.w, r.h);
-  const sw = src ? src.videoWidth || src.width : 0;
-  const sh = src ? src.videoHeight || src.height : 0;
-  if (sw && sh) {
-    ctx.beginPath();
-    ctx.rect(r.x, r.y, r.w, r.h);
-    ctx.clip();
-    if (fit === 'cover') {
-      const k = Math.max(r.w / sw, r.h / sh);
-      ctx.drawImage(src, r.x + (r.w - sw * k) / 2, r.y + (r.h - sh * k) / 2, sw * k, sh * k);
-    } else {
-      const pad = Math.min(r.w, r.h) * 0.045;
-      const f = fitRect(sw, sh, r.w - pad * 2, r.h - pad * 2);
-      ctx.drawImage(src, r.x + pad + f.x, r.y + pad + f.y, f.w, f.h);
-    }
-  }
-  ctx.restore();
-}
-/* Text on the left, stage on the right in landscape; stage on top, text below in square and portrait frames. */
-function cardLayout(W, H, withStage) {
-  const S = Math.min(W, H);
-  const side = W / H >= 1.25;
-  const m = Math.round(side ? W * 0.07 : W * 0.08);
-  if (!withStage) return { S, side, m, stage: null, text: { x: m, y: m, w: W - m * 2, h: H - m * 2 } };
-  if (side) {
-    let sw = W - m - Math.round(W * 0.52);
-    let sh = (sw * 2) / 3;
-    if (sh > H - m * 2) { sh = H - m * 2; sw = sh * 1.5; }
-    const stage = { x: W - m - sw, y: (H - sh) / 2, w: sw, h: sh };
-    return { S, side, m, stage, text: { x: m, y: m, w: stage.x - m - W * 0.05, h: H - m * 2 } };
-  }
-  const sw = W - m * 2;
-  const sh = Math.min((sw * 2) / 3, H * 0.42);
-  const top = Math.round(H / W > 1.4 ? H * 0.09 : m);
-  const ty = top + sh + S * 0.06;
-  return { S, side, m, stage: { x: m, y: top, w: sw, h: sh }, text: { x: m, y: ty, w: sw, h: H - m - ty } };
-}
-
-/* Portrait and square frames: centre stage and text together instead of leaving the bottom empty. */
-function stackCenter(lay, r, H) {
-  if (lay.side || !lay.stage) return lay.text.y;
-  const gap = lay.text.y - (lay.stage.y + lay.stage.h);
-  const total = lay.stage.h + gap + r.h;
-  const top = Math.max(lay.stage.y, (H - total) / 2);
-  lay.stage.y = top;
-  return top + lay.stage.h + gap;
-}
-
 /* A column of text items (label, headline, paragraph, caution box, list), shrunk together until it fits. */
 function measureItems(ctx, items, maxW, k) {
   const out = [];
@@ -146,18 +94,18 @@ function measureItems(ctx, items, maxW, k) {
     const fs = it.size * k;
     const gap = out.length ? (it.gap || 0) * k : 0;
     let o;
-    if (it.kind === 'eyebrow') o = { lines: [it.text], h: fs * 1.2 };
+    if (it.kind === 'eyebrow' || it.kind === 'speed') o = { lines: [it.text], h: fs * 1.2 };
     else if (it.kind === 'caution') {
       const pad = fs * 0.8;
       const bar = Math.max(3, fs * 0.18);
-      const lfs = fs * 0.66;
+      const lfs = it.labelSize ? it.labelSize * k : fs * 0.66;
       ctx.font = xf(400, fs);
       const ls = wrapLines(ctx, it.text, maxW - pad * 2 - bar, it.maxLines || 3);
       const tw = Math.max(eyebrowWidth(ctx, it.label, lfs), ...ls.map((l) => { ctx.font = xf(400, fs); return ctx.measureText(l).width; }));
       o = { lines: ls, pad, bar, lfs, w: Math.min(maxW, tw + pad * 2 + bar), h: pad * 2 + lfs * 1.6 + ls.length * fs * it.lh };
     } else if (it.kind === 'list') {
       ctx.font = xf(it.weight, fs);
-      const rows = it.items.map((t) => wrapLines(ctx, t, maxW - fs * 1.4, 3));
+      const rows = it.items.map((t) => wrapLines(ctx, t, maxW - fs * 1.4, it.maxLines || 3));
       const rowGap = fs * 0.5;
       o = { rows, rowGap, h: rows.reduce((a, r) => a + r.length * fs * it.lh, 0) + rowGap * Math.max(0, rows.length - 1) };
     } else {
@@ -173,10 +121,10 @@ function measureItems(ctx, items, maxW, k) {
   }
   return { out, h };
 }
-function fitItems(ctx, items, maxW, maxH) {
+function fitItems(ctx, items, maxW, maxH, minK = 0.5) {
   let k = 1;
   let r = measureItems(ctx, items, maxW, k);
-  while (r.h > maxH && k > 0.5) { k *= 0.92; r = measureItems(ctx, items, maxW, k); }
+  while (r.h > maxH && k > minK) { k = Math.max(minK, k * 0.96); r = measureItems(ctx, items, maxW, k); }
   return r;
 }
 function drawItems(ctx, r, x, y) {
@@ -188,15 +136,25 @@ function drawItems(ctx, r, x, y) {
     const it = o.it;
     const fs = o.fs;
     if (it.kind === 'eyebrow') drawEyebrow(ctx, it.text, x, y + baseOf(fs, 1.2), fs, it.color);
-    else if (it.kind === 'caution') {
-      ctx.fillStyle = 'rgba(255,200,61,0.12)';
+    else if (it.kind === 'speed') {
+      // two small triangles, then the label
+      const tri = fs * 0.62;
+      const cy = y + (fs * 1.2) / 2;
+      ctx.fillStyle = it.color;
+      for (let q = 0; q < 2; q++) {
+        const tx = x + q * tri * 1.08;
+        ctx.beginPath(); ctx.moveTo(tx, cy - tri * 0.5); ctx.lineTo(tx + tri, cy); ctx.lineTo(tx, cy + tri * 0.5); ctx.closePath(); ctx.fill();
+      }
+      drawEyebrow(ctx, it.text, x + tri * 2.2 + fs * 0.5, y + baseOf(fs, 1.2), fs, it.color);
+    } else if (it.kind === 'caution') {
+      ctx.fillStyle = 'rgba(219,8,18,0.16)';
       ctx.fillRect(x, y, o.w, o.h);
       ctx.fillStyle = XT.caution;
       ctx.fillRect(x, y, o.bar, o.h);
       const tx = x + o.bar + o.pad;
       drawEyebrow(ctx, it.label, tx, y + o.pad + baseOf(o.lfs, 1.2), o.lfs, XT.caution);
       ctx.font = xf(400, fs);
-      ctx.fillStyle = '#FFE9B0';
+      ctx.fillStyle = XT.white;
       o.lines.forEach((ln, i) => ctx.fillText(ln, tx, y + o.pad + o.lfs * 1.6 + i * fs * it.lh + baseOf(fs, it.lh)));
     } else if (it.kind === 'list') {
       let yy = y;
@@ -221,161 +179,208 @@ function drawItems(ctx, r, x, y) {
   ctx.restore();
 }
 
-function drawWatermark(ctx, W, H, o) {
+function drawWatermark(ctx, W, H) {
   const img = Brand.logo;
   if (!img || !img.width || !img.height) return;
-  const S = Math.min(W, H);
-  const m = S * 0.04;
-  const maxW = S * [0, 0.16, 0.24, 0.34][Brand.cfg.wmSize || 2];
-  const k = Math.min(maxW / img.width, (maxW * 0.6) / img.height);
-  const w = img.width * k;
-  const hh = img.height * k;
+  const k = vk(W, H);
+  const maxW = [0, 150, 210, 280][Brand.cfg.wmSize || 2] * k;
+  const s = Math.min(maxW / img.width, (90 * k) / img.height);
+  const w = img.width * s;
+  const hh = img.height * s;
   const pos = Brand.cfg.wmPos || 'tl';
-  const x = pos[1] === 'l' ? m : W - m - w;
-  let y = pos[0] === 't' ? m : H - m - hh;
-  if (o && o.liftBottom && pos === 'bl') y -= lowerThirdHeight(S) + m * 0.5;
+  const x = pos[1] === 'l' ? XV.side * k : W - XV.side * k - w;
+  const y = pos[0] === 't' ? XV.bottom * k : H - XV.bottom * k - hh;
   ctx.save();
   ctx.globalAlpha = Brand.cfg.wmOpacity || 0.85;
   ctx.drawImage(img, x, y, w, hh);
   ctx.restore();
 }
 
-function drawIntroCard(ctx, W, H, info, hero) {
+/* ---- Brand layout (sizes in settings.js, XV) ------------------------------------------------------------------
+   Pixel sizes of the brand sheet are for 1920 x 1080; vk() scales them to the video size. */
+function vk(W, H) { return Math.min(W, H) / 1080; }
+
+/* Where the step text and the machine go: landscape = text panel on the left (30 %), picture on the right (70 %);
+   portrait and square = picture on top (70 %), text below (30 %). Margins: XV.side left and right, XV.bottom. */
+function stepLayout(W, H) {
+  const k = vk(W, H);
+  const mx = XV.side * k;
+  const my = XV.bottom * k;
+  const gap = 48 * k;
+  if (W / H >= 1.25) {
+    const split = Math.round(W * XV.panel);
+    return { k, side: true,
+      text: { x: mx, y: my, w: split - mx - gap, h: H - my * 2 },
+      media: { x: split, y: my, w: W - split - mx, h: H - my * 2 } };
+  }
+  const split = Math.round(H * (1 - XV.panel));
+  return { k, side: false,
+    media: { x: mx, y: my, w: W - mx * 2, h: split - my },
+    text: { x: mx, y: split + gap * 0.6, w: W - mx * 2, h: H - split - gap * 0.6 - my } };
+}
+
+/* The machine: a video frame or picture fitted into its area, nothing drawn over it. Returns the picture's box. */
+function drawMedia(ctx, src, r) {
+  const sw = src ? src.videoWidth || src.width : 0;
+  const sh = src ? src.videoHeight || src.height : 0;
+  if (!sw || !sh) {
+    ctx.fillStyle = XT.stage;
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    return r;
+  }
+  const f = fitRect(sw, sh, r.w, r.h);
+  const box = { x: r.x + f.x, y: r.y + f.y, w: f.w, h: f.h };
+  if (src.drawTo) src.drawTo(ctx, box.x, box.y, box.w, box.h);
+  else ctx.drawImage(src, box.x, box.y, box.w, box.h);
+  return box;
+}
+
+/* The speed of a step as a short line in the panel: "▶▶ 2× FASTER". */
+function speedItem(speed, k) {
+  const L = xl();
+  return { kind: 'speed', text: speed < 1 ? L.slow(speedLabel(speed)) : L.fast(speedLabel(speed)), size: XV.caption * k, color: XT.grey1, gap: 34 * k };
+}
+
+/* The step text: label (brown), title, instruction, caution (red), speed. Max XV.maxLines lines per block. */
+function stepPanelItems(ctx, lay, seg, opts, maxH, extraText) {
+  const L = xl();
+  const k = lay.k;
+  const st = seg.step;
+  const n = seg.index + 1;
+  const ml = XV.maxLines;
+  const items = [
+    { kind: 'eyebrow', text: xStepLabel(n, opts.nSteps), size: XV.caption * k, color: XT.brown },
+    { kind: 'text', text: st.title || `${L.step} ${n}`, weight: 700, size: XV.stepTitle * k, lh: 1.15, color: XT.white, maxLines: ml, gap: 22 * k },
+    extraText ? { kind: 'text', text: extraText, weight: 400, size: XV.text * k, lh: 1.38, color: XT.white, maxLines: ml, gap: 22 * k } : null,
+    !extraText && st.desc ? { kind: 'text', text: st.desc, weight: 400, size: XV.text * k, lh: 1.38, color: XT.grey1, maxLines: ml, gap: 22 * k } : null,
+    st.caution ? { kind: 'caution', label: L.caution, labelSize: XV.caption * k, text: st.caution, size: XV.text * k, lh: 1.32, maxLines: ml, gap: 34 * k } : null,
+    seg.speed && seg.speed !== 1 ? speedItem(seg.speed, k) : null,
+  ].filter(Boolean);
+  // never smaller than the brand minimum (28 px for 30 px text)
+  return fitItems(ctx, items, lay.text.w, maxH, XV.caption / XV.text);
+}
+function panelLogoHeight(lay) {
+  const img = Brand.logo;
+  const maxW = Math.min(lay.text.w, [0, 150, 210, 280][Brand.cfg.wmSize || 2] * lay.k);
+  return Math.min(img.height * (maxW / img.width), 90 * lay.k);
+}
+function drawPanelLogo(ctx, lay) {
+  const img = Brand.logo;
+  const hh = panelLogoHeight(lay);
+  const w = img.width * (hh / img.height);
+  ctx.save();
+  ctx.globalAlpha = Brand.cfg.wmOpacity || 0.85;
+  ctx.drawImage(img, lay.text.x, lay.text.y + lay.text.h - hh, w, hh);
+  ctx.restore();
+}
+
+/* A step moment (clip, the short pause before it, a picture): machine in its 70 %, text in its 30 %. */
+function drawStepFrame(ctx, W, H, src, seg, opts, extraText) {
+  ctx.fillStyle = XT.black;
+  ctx.fillRect(0, 0, W, H);
+  const sw = src ? src.videoWidth || src.width : 0;
+  const sh = src ? src.videoHeight || src.height : 0;
+  if (!opts.captions) {
+    // without the text panel: the picture fills the frame, as before
+    const r = fitRect(sw || W, sh || H, W, H);
+    if (sw) { if (src.drawTo) src.drawTo(ctx, r.x, r.y, r.w, r.h); else ctx.drawImage(src, r.x, r.y, r.w, r.h); }
+    if (opts.watermark) drawWatermark(ctx, W, H);
+    return;
+  }
+  const lay = stepLayout(W, H);
+  const k = lay.k;
+  const logoH = opts.watermark && Brand.logo ? panelLogoHeight(lay) : 0;
+  const logoRoom = logoH ? logoH + 40 * k : 0;
+  if (lay.side) {
+    // landscape: picture centred in the right 70 %, text top-aligned with the picture
+    const box = drawMedia(ctx, src, lay.media);
+    const r = stepPanelItems(ctx, lay, seg, opts, lay.text.h - logoRoom, extraText);
+    const y = Math.max(lay.text.y, Math.min(box.y, lay.text.y + lay.text.h - logoRoom - r.h));
+    drawItems(ctx, r, lay.text.x, y);
+  } else {
+    // portrait and square: picture and text as one block, centred; the text directly under the picture
+    const gap = 40 * k;
+    const r = stepPanelItems(ctx, lay, seg, opts, lay.text.h - logoRoom, extraText);
+    const f = fitRect(sw || 16, sh || 9, lay.media.w, lay.media.h);
+    const free = H - XV.bottom * k * 2 - logoRoom;
+    const y0 = XV.bottom * k + Math.max(0, (free - (f.h + gap + r.h)) / 2);
+    const box = drawMedia(ctx, src, { x: lay.media.x, y: y0, w: lay.media.w, h: f.h });
+    drawItems(ctx, r, lay.text.x, box.y + box.h + gap);
+  }
+  if (logoH) drawPanelLogo(ctx, lay);
+}
+
+/* Centred block of lines (opening title). */
+function drawCentered(ctx, r, cx, y) {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  for (const o of r.out) {
+    y += o.gap;
+    const it = o.it;
+    const fs = o.fs;
+    if (it.kind === 'eyebrow') {
+      const w = eyebrowWidth(ctx, it.text, fs);
+      drawEyebrow(ctx, it.text, cx - w / 2, y + baseOf(fs, 1.2), fs, it.color);
+    } else {
+      ctx.font = xf(it.weight, fs);
+      ctx.fillStyle = it.color;
+      setLetterSpacing(ctx, it.track ? fs * it.track : 0);
+      o.lines.forEach((ln, i) => ctx.fillText(ln, cx, y + i * fs * it.lh + baseOf(fs, it.lh)));
+      setLetterSpacing(ctx, 0);
+    }
+    if (it.rule) {
+      ctx.fillStyle = XT.brown;
+      ctx.fillRect(cx - it.rule / 2, y + o.h + o.fs * 0.9, it.rule, Math.max(2, o.fs * 0.06));
+    }
+    y += o.h;
+  }
+  ctx.restore();
+}
+
+/* Opening title: centred, title in white, the label in brown, details in grey. */
+function drawIntroCard(ctx, W, H, info) {
   paintCardBg(ctx, W, H);
   const L = xl();
-  const lay = cardLayout(W, H, !!hero);
-  const S = lay.S;
+  const k = vk(W, H);
+  const w = Math.min(W - XV.side * k * 2, 1500 * k);
   const sub = xClaim() || xFirstSentence(info.intro, 110);
   const meta = [L.steps(info.nSteps), fmtTime(Math.round(info.total), false)].concat(info.author ? [info.author] : []).join('   ·   ');
   const r = fitItems(ctx, [
-    { kind: 'eyebrow', text: L.guide, size: S * 0.022, color: XT.grey2 },
-    { kind: 'text', text: info.title || L.guide, weight: 700, size: S * (lay.side ? 0.076 : 0.068), lh: 1.08, color: XT.white, maxLines: 3, gap: S * 0.026, track: -0.012 },
-    sub ? { kind: 'text', text: sub, weight: 400, size: S * 0.032, lh: 1.38, color: XT.grey1, maxLines: 3, gap: S * 0.026 } : null,
-    { kind: 'text', text: meta, weight: 400, size: S * 0.022, lh: 1.3, color: XT.grey2, maxLines: 1, gap: S * 0.042 },
-    info.tools.length ? { kind: 'text', text: `${L.tools}: ${info.tools.join(' · ')}`, weight: 400, size: S * 0.022, lh: 1.4, color: XT.grey2, maxLines: 2, gap: S * 0.012 } : null,
-  ].filter(Boolean), lay.text.w, lay.text.h);
-  const y = lay.side || !hero ? lay.text.y + Math.max(0, (lay.text.h - r.h) / 2) : stackCenter(lay, r, H);
-  drawItems(ctx, r, lay.text.x, y);
-  if (hero) drawStage(ctx, lay.stage, hero.src, hero.fit);
+    { kind: 'eyebrow', text: L.guide, size: XV.caption * k, color: XT.brown },
+    { kind: 'text', text: info.title || L.guide, weight: 700, size: XV.title * k, lh: 1.1, color: XT.white, maxLines: XV.maxLines, gap: 26 * k, track: -0.01 },
+    sub ? { kind: 'text', text: sub, weight: 400, size: XV.text * k, lh: 1.38, color: XT.grey1, maxLines: XV.maxLines, gap: 30 * k } : null,
+    { kind: 'text', text: meta, weight: 400, size: XV.caption * k, lh: 1.3, color: XT.grey2, maxLines: 1, gap: 44 * k },
+    info.tools.length ? { kind: 'text', text: `${L.tools}: ${info.tools.join(' · ')}`, weight: 400, size: XV.caption * k, lh: 1.35, color: XT.grey2, maxLines: XV.maxLines, gap: 12 * k } : null,
+  ].filter(Boolean), w, H - XV.bottom * k * 2, XV.caption / XV.text);
+  drawCentered(ctx, r, W / 2, Math.max(XV.bottom * k, (H - r.h) / 2));
 }
 
+/* Safety: label and heading, then the notes with red markers, left-aligned. */
 function drawSafetyCard(ctx, W, H, items) {
   paintCardBg(ctx, W, H);
   const L = xl();
-  const lay = cardLayout(W, H, false);
-  const S = lay.S;
+  const k = vk(W, H);
+  const w = Math.min(W - XV.side * k * 2, 1300 * k);
   const r = fitItems(ctx, [
-    { kind: 'eyebrow', text: L.safetyKicker, size: S * 0.024, color: XT.caution },
-    { kind: 'text', text: L.safety, weight: 700, size: S * 0.07, lh: 1.08, color: XT.white, maxLines: 2, gap: S * 0.022, track: -0.012 },
-    { kind: 'list', items, weight: 400, size: S * 0.036, lh: 1.32, color: XT.white, bullet: XT.caution, gap: S * 0.05 },
-  ], Math.min(lay.text.w, W * 0.8), lay.text.h);
-  drawItems(ctx, r, lay.text.x, lay.text.y + Math.max(0, (lay.text.h - r.h) / 2));
+    { kind: 'eyebrow', text: L.safetyKicker, size: XV.caption * k, color: XT.hot },
+    { kind: 'text', text: L.safety, weight: 700, size: XV.title * k * 0.85, lh: 1.1, color: XT.white, maxLines: 2, gap: 22 * k, track: -0.01 },
+    { kind: 'list', items, weight: 400, size: XV.text * k, lh: 1.35, color: XT.white, bullet: XT.hot, gap: 48 * k, maxLines: XV.maxLines },
+  ], w, H - XV.bottom * k * 2, XV.caption / XV.text);
+  drawItems(ctx, r, XV.side * k, Math.max(XV.bottom * k, (H - r.h) / 2));
 }
 
-function drawStepCard(ctx, W, H, seg, info, still) {
-  paintCardBg(ctx, W, H);
-  const L = xl();
-  const n = seg.index + 1;
-  const st = seg.step;
-  const lay = cardLayout(W, H, true);
-  const S = lay.S;
-  const r = fitItems(ctx, [
-    { kind: 'eyebrow', text: xStepLabel(n, info.nSteps), size: S * 0.022, color: XT.grey2 },
-    { kind: 'text', text: st.title || `${L.step} ${n}`, weight: 700, size: S * (lay.side ? 0.066 : 0.06), lh: 1.1, color: XT.white, maxLines: 3, gap: S * 0.024, track: -0.01 },
-    st.desc ? { kind: 'text', text: st.desc, weight: 400, size: S * 0.03, lh: 1.42, color: XT.grey1, maxLines: lay.side ? 5 : 4, gap: S * 0.026 } : null,
-    st.caution ? { kind: 'caution', label: L.caution, text: st.caution, size: S * 0.027, lh: 1.36, maxLines: 3, gap: S * 0.036 } : null,
-  ].filter(Boolean), lay.text.w, lay.text.h);
-  drawItems(ctx, r, lay.text.x, lay.side ? lay.text.y + Math.max(0, (lay.text.h - r.h) / 2) : stackCenter(lay, r, H));
-  drawStage(ctx, lay.stage, still ? still.src : null, still ? still.fit : 'cover');
-  if (!still) {
-    ctx.save();
-    ctx.fillStyle = XT.grey3;
-    ctx.font = xf(700, lay.stage.h * 0.46);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(n), lay.stage.x + lay.stage.w / 2, lay.stage.y + lay.stage.h / 2);
-    ctx.restore();
-  }
-}
-
-/* Caption on clips and pictures: a black block at the bottom left with the step label above the title. */
-function lowerThirdBox(S) { return { m: S * 0.04, pad: S * 0.024, efs: S * 0.018, tfs: S * 0.032, gap: S * 0.008 }; }
-function lowerThirdHeight(S) { const b = lowerThirdBox(S); return b.pad * 2 + b.efs * 1.2 + b.gap + b.tfs * 1.2; }
-function drawLowerThird(ctx, W, H, label, text) {
-  const S = Math.min(W, H);
-  const b = lowerThirdBox(S);
-  ctx.save();
-  ctx.font = xf(700, b.tfs);
-  const t = ellipsize(ctx, text, W - b.m * 2 - b.pad * 2);
-  const w = Math.min(W - b.m * 2, Math.max(ctx.measureText(t).width, eyebrowWidth(ctx, label, b.efs)) + b.pad * 2);
-  const hh = lowerThirdHeight(S);
-  const x = b.m;
-  const y = H - b.m - hh;
-  ctx.fillStyle = 'rgba(13,13,13,0.86)';
-  ctx.fillRect(x, y, w, hh);
-  drawEyebrow(ctx, label, x + b.pad, y + b.pad + baseOf(b.efs, 1.2), b.efs, XT.grey1);
-  ctx.font = xf(700, b.tfs);
-  ctx.fillStyle = XT.white;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(t, x + b.pad, y + b.pad + b.efs * 1.2 + b.gap + baseOf(b.tfs, 1.2));
-  ctx.restore();
-}
-
-function drawSpeedBadge(ctx, W, H, speed, left) {
-  const S = Math.min(W, H);
-  const m = S * 0.04;
-  const fs = S * 0.019;
-  const L = xl();
-  const label = speed < 1 ? L.slow(speedLabel(speed)) : L.fast(speedLabel(speed));
-  const tri = fs * 0.8;
-  const pad = fs * 1.1;
-  const hh = fs * 2.7;
-  const w = pad + tri * 2.15 + fs * 0.8 + eyebrowWidth(ctx, label, fs) + pad * 0.85;
-  const x = left ? m : W - m - w;
-  const y = m;
-  ctx.save();
-  ctx.fillStyle = 'rgba(13,13,13,0.86)';
-  ctx.fillRect(x, y, w, hh);
-  ctx.fillStyle = XT.white;
-  let tx = x + pad;
-  const cy = y + hh / 2;
-  for (let k = 0; k < 2; k++) {
-    ctx.beginPath();
-    ctx.moveTo(tx, cy - tri * 0.5);
-    ctx.lineTo(tx + tri, cy);
-    ctx.lineTo(tx, cy + tri * 0.5);
-    ctx.closePath();
-    ctx.fill();
-    tx += tri * 1.08;
-  }
-  drawEyebrow(ctx, label, tx + fs * 0.8, cy + fs * 0.36, fs, XT.white);
-  ctx.restore();
-}
-
+/* Brand videos fill the frame untouched; step clips get the brand layout. */
 function drawClipFrame(ctx, v, seg, W, H, opts) {
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(0, 0, W, H);
-  const r = fitRect(v.videoWidth || W, v.videoHeight || H, W, H);
-  if (v.drawTo) v.drawTo(ctx, r.x, r.y, r.w, r.h);
-  else ctx.drawImage(v, r.x, r.y, r.w, r.h);
-  if (seg.kind !== 'clip') return; // brand videos stay untouched
-  if (opts.captions) drawLowerThird(ctx, W, H, xStepLabel(seg.index + 1, opts.nSteps), seg.step.title || `${xl().step} ${seg.index + 1}`);
-  if ((opts.captions || opts.badge) && seg.speed !== 1) drawSpeedBadge(ctx, W, H, seg.speed, !!(opts.watermark && Brand.logo && Brand.cfg.wmPos === 'tr'));
-  if (opts.watermark) drawWatermark(ctx, W, H, { liftBottom: opts.captions });
-}
-
-function drawPicFrame(ctx, W, H, comp, seg, opts) {
-  ctx.fillStyle = XT.black;
-  ctx.fillRect(0, 0, W, H);
-  const S = Math.min(W, H);
-  const m = S * 0.03;
-  if (comp) {
-    const r = fitRect(comp.width, comp.height, W - m * 2, H - m * 2);
-    ctx.drawImage(comp, m + r.x, m + r.y, r.w, r.h);
+  if (seg.kind !== 'clip') {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, H);
+    const r = fitRect(v.videoWidth || W, v.videoHeight || H, W, H);
+    if (v.drawTo) v.drawTo(ctx, r.x, r.y, r.w, r.h);
+    else ctx.drawImage(v, r.x, r.y, r.w, r.h);
+    return;
   }
-  if (opts.captions) drawLowerThird(ctx, W, H, xStepLabel(seg.index + 1, opts.nSteps), seg.pic.caption || seg.step.title || `${xl().step} ${seg.index + 1}`);
-  if (opts.watermark) drawWatermark(ctx, W, H, { liftBottom: opts.captions });
+  drawStepFrame(ctx, W, H, v, seg, opts);
 }
 
 function applyFade(ctx, W, H, u, dur) {
@@ -557,16 +562,20 @@ async function renderTimeline({ P, segs, total, nSteps, W, H, fps, sink, opts: b
     if (statics.has(seg)) return statics.get(seg);
     const c = makeCanvas(W, H);
     const x = c.getContext('2d', { alpha: false });
-    if (seg.kind === 'intro') drawIntroCard(x, W, H, info, await stillOf(clipOf(0), 0.35));
+    if (seg.kind === 'intro') drawIntroCard(x, W, H, info);
     else if (seg.kind === 'safety') drawSafetyCard(x, W, H, info.safety);
-    else if (seg.kind === 'stepcard') drawStepCard(x, W, H, seg, info, await stillOf(clipOf(seg.index), 0.15));
-    else if (seg.kind === 'extimg') drawBrandPicture(x, W, H, seg.img);
+    else if (seg.kind === 'stepcard') {
+      // the short pause: the first picture of the step's clip with its text, so the viewer can read before it moves
+      const cs = clipOf(seg.index);
+      const still = await stillOf(cs, 0);
+      drawStepFrame(x, W, H, still ? still.src : null, Object.assign({}, seg, { speed: cs ? cs.speed : 1 }), Object.assign({}, opts, { captions: true }));
+    } else if (seg.kind === 'extimg') drawBrandPicture(x, W, H, seg.img);
     else {
       const comp = await picComposite(seg.pic, Math.max(W, H));
-      drawPicFrame(x, W, H, comp, seg, opts);
+      drawStepFrame(x, W, H, comp, seg, opts, seg.pic.caption || '');
       freeCanvas(comp);
     }
-    if (opts.watermark && seg.kind !== 'pic' && seg.kind !== 'extimg') drawWatermark(x, W, H);
+    if (opts.watermark && (seg.kind === 'intro' || seg.kind === 'safety')) drawWatermark(x, W, H);
     statics.set(seg, c);
     return c;
   };

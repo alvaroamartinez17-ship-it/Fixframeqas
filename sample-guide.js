@@ -45,18 +45,18 @@ async function createSampleProject() {
     const p1 = await grab(0.7);
     p1.caption = 'Undo the screws in this order.';
     p1.shapes = [
-      { id: uid('a'), type: 'num', x: 0.247, y: 0.175, n: 1, color: '#FFCC00', size: 2 },
-      { id: uid('a'), type: 'num', x: 0.655, y: 0.175, n: 2, color: '#FFCC00', size: 2 },
-      { id: uid('a'), type: 'num', x: 0.247, y: 0.655, n: 3, color: '#FFCC00', size: 2 },
-      { id: uid('a'), type: 'num', x: 0.655, y: 0.655, n: 4, color: '#FFCC00', size: 2 },
-      { id: uid('a'), type: 'box', x: 0.80, y: 0.06, text: 'PH1 · 4 screws', color: '#FF3B30', size: 2, tx: 0.718, ty: 0.255 },
+      { id: uid('a'), type: 'num', x: 0.247, y: 0.175, n: 1, color: '#FFFFFF', size: 2 },
+      { id: uid('a'), type: 'num', x: 0.655, y: 0.175, n: 2, color: '#FFFFFF', size: 2 },
+      { id: uid('a'), type: 'num', x: 0.247, y: 0.655, n: 3, color: '#FFFFFF', size: 2 },
+      { id: uid('a'), type: 'num', x: 0.655, y: 0.655, n: 4, color: '#FFFFFF', size: 2 },
+      { id: uid('a'), type: 'box', x: 0.80, y: 0.06, text: 'PH1 · 4 screws', color: '#996E4E', size: 2, tx: 0.718, ty: 0.255 },
     ];
     const p2 = await grab(13.2);
     p2.caption = 'The new cartridge sits flush in the slot.';
     p2.shapes = [
-      { id: uid('a'), type: 'rect', x1: 0.325, y1: 0.395, x2: 0.675, y2: 0.605, color: '#FFCC00', size: 2 },
-      { id: uid('a'), type: 'arrow', x1: 0.06, y1: 0.50, x2: 0.30, y2: 0.50, color: '#FF3B30', size: 3 },
-      { id: uid('a'), type: 'box', x: 0.035, y: 0.08, text: 'Push in until it clicks', color: '#FF3B30', size: 2, tx: 0.33, ty: 0.42 },
+      { id: uid('a'), type: 'rect', x1: 0.325, y1: 0.395, x2: 0.675, y2: 0.605, color: '#FFFFFF', size: 2 },
+      { id: uid('a'), type: 'arrow', x1: 0.06, y1: 0.50, x2: 0.30, y2: 0.50, color: '#996E4E', size: 3 },
+      { id: uid('a'), type: 'box', x: 0.035, y: 0.08, text: 'Push in until it clicks', color: '#996E4E', size: 2, tx: 0.33, ty: 0.42 },
     ];
     P.steps = [
       newStep(0.6, 6.3, { ...at, title: 'Remove the four cover screws', desc: 'Undo the screws in the order shown. Keep them in a tray; they are all the same length.', speed: 2, pictures: [p1] }),

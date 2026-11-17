@@ -7,7 +7,11 @@
    Technical note:  Picture markup: arrows, info boxes (with optional pointer), circles, frames, numbers.
                    Coordinates are stored 0..1 relative to the picture; sizes scale with the picture.
    ============================================================================================================ */
-const ANN_COLORS = ['#FF3B30', '#FFCC00', '#E75B12', '#34C759', '#0A84FF', '#FFFFFF', '#111111'];
+// Brand colours only: white, brown, red (hot), blue (cold), light / medium / dark grey (see XT in settings.js).
+const ANN_COLORS = ['#FFFFFF', '#996E4E', '#DB0812', '#008AC3', '#D9D9D6', '#75787B', '#53565A'];
+// Colours of older versions are shown in the nearest brand colour.
+const ANN_OLD_COLORS = { '#FF3B30': '#DB0812', '#FFCC00': '#FFFFFF', '#E75B12': '#996E4E', '#34C759': '#FFFFFF', '#0A84FF': '#008AC3', '#111111': '#53565A' };
+function annColor(c) { const u = String(c || '').toUpperCase(); return ANN_COLORS.includes(u) ? u : ANN_OLD_COLORS[u] || '#FFFFFF'; }
 const ANN_FONT = '"FX Export", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'; // export font first: markup is part of the exports
 const ANN_SIZE = { stroke: [0, 4.2, 7, 10.5], font: [0, 24, 32, 44], num: [0, 19, 26, 35] };
 
@@ -90,28 +94,44 @@ function boxLayout(ctx, s, W, H) {
 function drawBox(ctx, s, W, H) {
   const L = boxLayout(ctx, s, W, H);
   const u = annUnit(W, H);
+  const color = annColor(s.color);
   if (s.tx != null && s.ty != null) {
     const tx = s.tx * W;
     const ty = s.ty * H;
     if (!(tx >= L.x && tx <= L.x + L.w && ty >= L.y && ty <= L.y + L.h)) {
-      drawArrowGeom(ctx, L.x + L.w / 2, L.y + L.h / 2, tx, ty, Math.max(2.4 * u, L.fs * 0.14), s.color);
+      // a thin connecting line from the box to the part, ending in a small dot (brand: thin lines identify parts)
+      const lw = Math.max(1.5, u * 1.6);
+      const cx = clamp(tx, L.x, L.x + L.w);
+      const cy = clamp(ty, L.y, L.y + L.h);
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = lw;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(tx, ty, Math.max(lw * 2.2, u * 4), 0, Math.PI * 2);
+      ctx.fill();
     }
   }
-  roundRectPath(ctx, L.x, L.y, L.w, L.h, L.fs * 0.32);
-  ctx.fillStyle = s.color;
+  roundRectPath(ctx, L.x, L.y, L.w, L.h, L.fs * 0.18);
+  ctx.fillStyle = color;
   ctx.fill();
   ctx.shadowColor = 'transparent';
   ctx.lineWidth = Math.max(1, u * 1.2);
   ctx.strokeStyle = 'rgba(0,0,0,0.22)';
   ctx.stroke();
-  ctx.fillStyle = inkOn(s.color);
+  ctx.fillStyle = inkOn(color);
   ctx.font = `650 ${L.fs}px ${ANN_FONT}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   L.lines.forEach((ln, i) => ctx.fillText(ln, L.x + L.padX, L.y + L.padY + L.fs * 0.53 + i * L.lh));
 }
 
-function drawShape(ctx, s, W, H) {
+function drawShape(ctx, s0, W, H) {
+  const s = Object.assign({}, s0, { color: annColor(s0.color) });
   const u = annUnit(W, H);
   const sw = ANN_SIZE.stroke[s.size || 2] * u;
   ctx.save();

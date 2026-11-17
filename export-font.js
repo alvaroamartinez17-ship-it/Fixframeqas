@@ -1,10 +1,10 @@
 /* ============================================================================================================
    export-font.js
-   What it does:    The font of the exports (Inter, or your own font files) and how it is put into PDF and Word
+   What it does:    The font of the exports (Noto Sans SemiCondensed, or your own font files) and how it is put into PDF and Word
                    files.
    Change here:     Nothing; choose fonts in the app under Brand & safety.
    Engine room: better leave it as it is.
-   Technical note:  Export font: the bundled Inter (fx-font-regular.ttf, fx-font-bold.ttf) or the user's own font
+   Technical note:  Export font: the bundled Noto Sans SemiCondensed (fx-font-regular.ttf, fx-font-bold.ttf) or the user's own font
                    files. The same files are drawn on video cards and embedded in PDF files and Word
                    files, so every export uses one typeface. Only the export uses it; the app's own screens keep
                    the system font.
@@ -276,7 +276,7 @@ function subsetTrueType(face, used) {
 const XFont = {
   std: { r: null, b: null },
   faces: { r: null, b: null },
-  name: 'Inter',
+  name: 'Noto Sans SemiCondensed',
   custom: false,
   note: '',
   ready: null,
@@ -302,9 +302,9 @@ const XFont = {
     }
     this.custom = !!own.r;
     this.faces = this.custom ? { r: own.r, b: own.b || null } : { r: this.std.r, b: this.std.b };
-    this.name = this.custom ? own.r.family : 'Inter';
+    this.name = this.custom ? own.r.family : 'Noto Sans SemiCondensed';
     this.note = this.custom && !own.r.embeddable
-      ? 'The licence of this font does not allow embedding it in files. Videos use it; PDF and Word guides use Inter instead.' : '';
+      ? 'The licence of this font does not allow embedding it in files. Videos use it; PDF and Word guides use the standard font instead.' : '';
     await this.register();
   },
   /* FontFace for the canvas: the regular file as weight 400, the bold file as 700 (a missing bold is synthesised). */
@@ -329,13 +329,13 @@ const XFont = {
     if (this.ready) await this.ready;
     try { await Promise.all([document.fonts.load(`400 24px "${XF_FAMILY}"`), document.fonts.load(`700 24px "${XF_FAMILY}"`)]); } catch (e) { /* fallback fonts */ }
   },
-  /* The faces that may go into files: the user's font when its licence allows it, otherwise Inter. */
+  /* The faces that may go into files: the user's font when its licence allows it, otherwise the standard font. */
   fileFaces() {
     const own = this.custom && this.faces.r && this.faces.r.embeddable;
     const r = own ? this.faces.r : this.std.r;
     let b = own ? this.faces.b : this.std.b;
     if (b && !b.embeddable) b = null;
-    return { r, b, name: own ? this.faces.r.family : 'Inter', own };
+    return { r, b, name: own ? this.faces.r.family : 'Noto Sans SemiCondensed', own };
   },
   css() { return XF_STACK; },
   /* Choose font files: the lightest upright file becomes regular, the boldest upright one bold. */
